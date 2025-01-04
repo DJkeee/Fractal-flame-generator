@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GammaLogProcessor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">java</a> &gt; <a href="index.source.html" class="el_package">backend.academy.postprocessing</a> &gt; <span class="el_source">GammaLogProcessor.java</span></div><h1>GammaLogProcessor.java</h1><pre class="source lang-java linenums">package backend.academy.postprocessing;
+
+import backend.academy.fractalimage.FractalImage;
+import backend.academy.primitives.Dye;
+import backend.academy.primitives.Pixel;
+import java.util.Arrays;
+import java.util.Objects;
+import static backend.academy.primitives.Dye.DYE_RANGE;
+
+/**
+ * Класс GammaLogProcessor реализует интерфейс ImageProcessor и предназначен для
+ * обработки изображений с использованием гамма-коррекции и логарифмической
+ * нормализации цвета пикселей. Этот класс применяет гамма-коррекцию к цветам
+ * пикселей на основе их количества попаданий (hit count) и затем осуществляет
+ * сглаживание цветов, чтобы улучшить визуальное восприятие изображения.
+ */
+public class GammaLogProcessor implements ImageProcessor {
+
+    /**
+     * Значение гамма, используемое для коррекции цвета (по умолчанию 2.2).
+     */
+<span class="nc" id="L22">    @SuppressWarnings(&quot;MagicNumber&quot;)</span>
+    private double gamma = 2.2;
+
+    /**
+     * Конструктор по умолчанию для создания экземпляра GammaLogProcessor.
+     */
+<span class="nc" id="L28">    public GammaLogProcessor() {</span>
+<span class="nc" id="L29">    }</span>
+
+    /**
+     * Обрабатывает заданное фрактальное изображение, применяя логарифмическую
+     * коррекцию цвета к каждому пикселю на основе его количества попаданий.
+     *
+     * @param image фрактальное изображение, которое будет обработано
+     */
+    @Override
+    public void process(FractalImage image) {
+<span class="nc" id="L39">        int maxHitCount = findMaxHitCount(image);</span>
+<span class="nc bnc" id="L40" title="All 2 branches missed.">        if (maxHitCount == 0) {</span>
+<span class="nc" id="L41">            return;</span>
+        }
+
+<span class="nc" id="L44">        double logMax = Math.log10(maxHitCount);</span>
+
+<span class="nc bnc" id="L46" title="All 2 branches missed.">        for (Pixel pixel : image.data()) {</span>
+<span class="nc bnc" id="L47" title="All 4 branches missed.">            if (pixel == null || pixel.getHitCount() == 0) {</span>
+<span class="nc" id="L48">                continue;</span>
+            }
+<span class="nc" id="L50">            int red = logCorrection(pixel.getRed(), pixel.getHitCount(), logMax);</span>
+<span class="nc" id="L51">            int green = logCorrection(pixel.getGreen(), pixel.getHitCount(), logMax);</span>
+<span class="nc" id="L52">            int blue = logCorrection(pixel.getBlue(), pixel.getHitCount(), logMax);</span>
+<span class="nc" id="L53">            Dye dye = new Dye(red, green, blue);</span>
+<span class="nc" id="L54">            pixel.setDye(dye);</span>
+        }
+
+<span class="nc" id="L57">        smoothImage(image.data());</span>
+<span class="nc" id="L58">    }</span>
+
+    /**
+     * Сглаживает цвета пикселей, используя средние значения цветов соседних пикселей.
+     *
+     * @param pixels массив пикселей
+     */
+    private void smoothImage(Pixel[] pixels) {
+<span class="nc bnc" id="L66" title="All 2 branches missed.">        for (int i = 0; i &lt; pixels.length; i++) {</span>
+<span class="nc bnc" id="L67" title="All 2 branches missed.">            if (pixels[i] != null) {</span>
+<span class="nc" id="L68">                Dye smoothedDye = smoothColors(pixels, i);</span>
+<span class="nc" id="L69">                pixels[i].setDye(smoothedDye);</span>
+            }
+        }
+<span class="nc" id="L72">    }</span>
+
+    /**
+     * Находит максимальное количество попаданий среди всех пикселей в изображении.
+     *
+     * @param image фрактальное изображение, из которого извлекаются данные о пикселях
+     * @return максимальное количество попаданий среди пикселей
+     */
+    private int findMaxHitCount(FractalImage image) {
+<span class="nc" id="L81">        return Arrays.stream(image.data())</span>
+<span class="nc" id="L82">            .filter(Objects::nonNull)</span>
+<span class="nc" id="L83">            .mapToInt(Pixel::getHitCount)</span>
+<span class="nc" id="L84">            .max()</span>
+<span class="nc" id="L85">            .orElse(0);</span>
+    }
+
+    /**
+     * Применяет логарифмическую коррекцию к значению цвета на основе количества попаданий.
+     *
+     * @param color    значение цвета (красный, зеленый или синий)
+     * @param hitCount количество попаданий для данного пикселя
+     * @param logMax   логарифмическое значение максимального количества попаданий
+     * @return откорректированное значение цвета
+     */
+    private int logCorrection(int color, int hitCount, double logMax) {
+<span class="nc bnc" id="L97" title="All 2 branches missed.">        if (hitCount &lt;= 1) {</span>
+<span class="nc" id="L98">            return color;</span>
+        }
+<span class="nc" id="L100">        double logValue = Math.log10(hitCount);</span>
+<span class="nc" id="L101">        return (int) Math.max(0, Math.min(DYE_RANGE, Math.round(color * Math.pow(logValue / logMax, 1 / gamma))));</span>
+    }
+
+    /**
+     * Сглаживает цвета текущего пикселя на основе цветов его соседей.
+     *
+     * @param pixels массив пикселей
+     * @param index  индекс текущего пикселя
+     * @return объект Dye, представляющий средний цвет соседей
+     */
+    private Dye smoothColors(Pixel[] pixels, int index) {
+<span class="nc" id="L112">        int totalRed = 0;</span>
+<span class="nc" id="L113">        int totalGreen = 0;</span>
+<span class="nc" id="L114">        int totalBlue = 0;</span>
+<span class="nc" id="L115">        int count = 0;</span>
+
+<span class="nc bnc" id="L117" title="All 2 branches missed.">        for (int offset = -1; offset &lt;= 1; offset++) {</span>
+<span class="nc" id="L118">            int neighborIndex = index + offset;</span>
+
+<span class="nc bnc" id="L120" title="All 6 branches missed.">            if (neighborIndex &gt;= 0 &amp;&amp; neighborIndex &lt; pixels.length &amp;&amp; pixels[neighborIndex] != null) {</span>
+<span class="nc" id="L121">                totalRed += pixels[neighborIndex].getDye().getRed();</span>
+<span class="nc" id="L122">                totalGreen += pixels[neighborIndex].getDye().getGreen();</span>
+<span class="nc" id="L123">                totalBlue += pixels[neighborIndex].getDye().getBlue();</span>
+<span class="nc" id="L124">                count++;</span>
+            }
+        }
+
+<span class="nc bnc" id="L128" title="All 2 branches missed.">        if (count &gt; 0) {</span>
+<span class="nc" id="L129">            return new Dye(totalRed / count, totalGreen / count, totalBlue / count);</span>
+        } else {
+<span class="nc" id="L131">            return new Dye(0, 0, 0);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ImageSaver.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">java</a> &gt; <a href="index.source.html" class="el_package">backend.academy.imagesaving</a> &gt; <span class="el_source">ImageSaver.java</span></div><h1>ImageSaver.java</h1><pre class="source lang-java linenums">package backend.academy.imagesaving;
+
+import backend.academy.fractalimage.FractalImage;
+import backend.academy.primitives.Pixel;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.logging.Logger;
+import javax.imageio.ImageIO;
+import lombok.SneakyThrows;
+
+/**
+ * Класс ImageSaver предоставляет методы для сохранения фрактальных изображений
+ * в файлы различных форматов.
+ */
+public final class ImageSaver {
+<span class="nc" id="L19">    static final Logger LOGGER = Logger.getLogger(ImageSaver.class.getName());</span>
+
+    private ImageSaver() {
+    }
+
+    /**
+     * Сохраняет заданное фрактальное изображение в файл с указанным именем и форматом.
+     *
+     * @param image    фрактальное изображение, которое нужно сохранить
+     * @param filename путь к файлу, в который будет сохранено изображение
+     * @param format   формат изображения, в который будет сохранено изображение
+     * @throws IOException если произошла ошибка ввода-вывода при сохранении файла
+     */
+<span class="nc" id="L32">    @SneakyThrows</span>
+    public static void save(FractalImage image, Path filename, ImageFormat format) {
+<span class="nc" id="L34">        BufferedImage renderedImage = new BufferedImage(image.width(), image.height(), BufferedImage.TYPE_INT_RGB);</span>
+<span class="nc" id="L35">        renderedImage.setRGB(0, 0, image.width(), image.height(), convertRGBToIntArray(image), 0, image.width());</span>
+<span class="nc" id="L36">        try (OutputStream out = Files.newOutputStream(filename)) {</span>
+<span class="nc" id="L37">            ImageIO.write(renderedImage, format.getFormat(), out);</span>
+<span class="nc" id="L38">            LOGGER.info(&quot;Успешное сохранение&quot;);</span>
+<span class="nc" id="L39">        } catch (IOException ex) {</span>
+<span class="nc" id="L40">            LOGGER.severe(ex.getMessage());</span>
+<span class="nc" id="L41">            LOGGER.severe(&quot;Ошибка при сохранении файла&quot;);</span>
+<span class="nc" id="L42">        }</span>
+<span class="nc" id="L43">    }</span>
+
+    /**
+     * Преобразует данные фрактального изображения в массив целых чисел,
+     * представляющий цвет пикселей в формате RGB.
+     *
+     * @param image фрактальное изображение, данные которого нужно преобразовать
+     * @return массив целых чисел, представляющий цвета пикселей изображения
+     */
+    public static int[] convertRGBToIntArray(FractalImage image) {
+<span class="nc" id="L53">        int[] pix = new int[image.data().length];</span>
+<span class="nc bnc" id="L54" title="All 2 branches missed.">        for (int i = 0; i &lt; pix.length; i++) {</span>
+<span class="nc" id="L55">            Pixel pixel = image.data()[i];</span>
+<span class="nc" id="L56">            pix[i] = pixel.getRgb();</span>
+        }
+<span class="nc" id="L58">        return pix;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
